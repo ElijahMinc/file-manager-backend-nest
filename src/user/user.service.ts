@@ -19,8 +19,11 @@ export class UserService {
   ) {}
 
   async findOneById(userId: User['id']) {
-    return await this.userRepository.findOneBy({
-      id: userId,
+    return await this.userRepository.findOne({
+      where: {
+        id: userId,
+      },
+      select: ['id', 'name', 'email', 'createdAt', 'updatedAt'],
     });
   }
 

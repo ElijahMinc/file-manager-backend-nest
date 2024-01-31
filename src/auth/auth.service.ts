@@ -3,7 +3,6 @@ import { UserService } from 'src/user/user.service';
 import * as argon2 from 'argon2';
 import { User } from 'src/user/entities/user.entity';
 import { TokenService } from 'src/token/token.service';
-
 @Injectable()
 export class AuthService {
   constructor(
@@ -37,5 +36,11 @@ export class AuthService {
       refreshToken: updatedRefreshToken,
     };
     // return await this.validateUser(createUserDto.email, createUserDto.password);
+  }
+
+  async getProfile(user: User) {
+    const userProfile = await this.userService.findOneById(user.id);
+
+    return userProfile;
   }
 }
