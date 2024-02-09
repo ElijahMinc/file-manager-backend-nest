@@ -36,7 +36,12 @@ export class TokenService {
       where: {
         refreshToken,
       },
+      relations: {
+        user: true,
+      },
     });
+
+    console.log('token', token);
 
     if (!token) {
       throw new UnauthorizedException('No refresh token');
@@ -63,8 +68,13 @@ export class TokenService {
   }
 
   async updateRefreshToken(user: User) {
-    const refreshToken = await this.tokenRepository.findOneBy({
-      id: user.id,
+    const refreshToken = await this.tokenRepository.findOne({
+      where: {
+        id: user.id,
+      },
+      relations: {
+        user: true,
+      },
     });
     console.log('refreshToken', refreshToken);
     const newRefreshToken = this.createRefreshToken(user.id);
@@ -90,6 +100,9 @@ export class TokenService {
     const refreshToken = await this.tokenRepository.findOne({
       where: {
         id: user.id,
+      },
+      relations: {
+        user: true,
       },
     });
 

@@ -10,6 +10,7 @@ export class AuthController {
   @Post('login')
   @UseGuards(LocalAuthGuard)
   async logIn(@Request() req, @Res() res) {
+    console.log('req.user', req.user);
     const {
       user,
       refreshToken: { refreshToken },
