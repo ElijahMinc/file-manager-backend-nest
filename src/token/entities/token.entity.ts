@@ -6,7 +6,9 @@ export class RefreshToken {
   @PrimaryColumn()
   id: number;
 
-  @OneToOne(() => User, (user) => user)
+  @OneToOne(() => User, (user) => user.refreshToken, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({
     name: 'user',
   })

@@ -6,11 +6,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { TokenModule } from './token/token.module';
+import { FileModule } from './file/file.module';
 
 @Module({
   imports: [
     UserModule,
     TokenModule,
+    AuthModule,
+    TokenModule,
+    FileModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -28,8 +32,6 @@ import { TokenModule } from './token/token.module';
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
       }),
     }),
-    AuthModule,
-    TokenModule,
   ],
   controllers: [AppController],
   providers: [AppService],
