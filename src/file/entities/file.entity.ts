@@ -27,7 +27,9 @@ export class File {
   @Column()
   type: FILE_TYPES;
 
-  @Column()
+  @Column({
+    default: 0,
+  })
   size: number;
 
   @Column()

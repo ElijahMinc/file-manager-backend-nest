@@ -3,7 +3,7 @@ import { FILE_TYPES } from '../entities/file.entity';
 import { IsEnum, MinLength } from 'class-validator';
 import { Column } from 'typeorm';
 
-export class CreateFileDto {
+export class CreateDirDto {
   @MinLength(1, {
     message: 'Name is too short',
   })
@@ -12,18 +12,13 @@ export class CreateFileDto {
   @IsEnum(FILE_TYPES)
   type: string;
 
-  @MinLength(1, {
-    message: 'Size is too short',
-  })
-  size: number;
-
-  @MinLength(1, {
-    message: 'Path is too short',
-  })
-  path: string;
-
   @Column({
     default: null,
   })
   parent_dir_id: Nullable<number>;
+
+  @Column({
+    default: '',
+  })
+  path: string;
 }

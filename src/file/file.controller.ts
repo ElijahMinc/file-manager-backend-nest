@@ -1,11 +1,14 @@
 import {
   Body,
   Controller,
+  Delete,
   FileTypeValidator,
   MaxFileSizeValidator,
+  Param,
   ParseFilePipe,
   Post,
   Request,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -19,6 +22,7 @@ import {
   FILE_TYPE_VALIDATOR_CONFIG,
   MAX_FILE_SIZE_VALIDATOR_CONFIG,
 } from 'src/constants';
+import { CreateDirDto } from './dto/create-dir-dto';
 
 @Controller('file')
 export class FileController {
@@ -26,7 +30,7 @@ export class FileController {
 
   @Post('upload')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', {}))
   uploadFile(
     @UploadedFile(
       new ParseFilePipe({
@@ -34,6 +38,7 @@ export class FileController {
           new MaxFileSizeValidator(MAX_FILE_SIZE_VALIDATOR_CONFIG),
           new FileTypeValidator(FILE_TYPE_VALIDATOR_CONFIG),
         ],
+        fileIsRequired: false,
       }),
     )
     file: Express.Multer.File,
@@ -43,6 +48,29 @@ export class FileController {
     return this.fileService.uploadFile({
       file,
       fileDto: createFileDto,
+      userId: req.user.id,
+    });
+  }
+  @Delete('dir/:id')
+  @UseGuards(JwtAuthGuard)
+  deleteDir(@Param('id') id: string, @Res() res) {
+    this.fileService.deleteDir({
+      folderId: +id,
+    });
+
+    return res.status(200).json({
+      message: 'Success',
+    });
+  }
+
+  @Post('dir')
+  @UseGuards(JwtAuthGuard)
+  createDir(
+    @Body(new ValidationPipe()) createDirDto: CreateDirDto,
+    @Request() req,
+  ) {
+    return this.fileService.createDir({
+      dirDto: createDirDto,
       userId: req.user.id,
     });
   }

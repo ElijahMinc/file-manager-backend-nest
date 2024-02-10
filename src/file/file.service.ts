@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotAcceptableException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FILE_TYPES, File } from './entities/file.entity';
 import { Repository } from 'typeorm';
@@ -12,6 +8,7 @@ import { User } from 'src/user/entities/user.entity';
 import * as path from 'path';
 import { UserService } from 'src/user/user.service';
 import { Nullable } from 'src/types/nullable.type';
+import { CreateDirDto } from './dto/create-dir-dto';
 
 @Injectable()
 export class FileService {
@@ -45,50 +42,145 @@ export class FileService {
     fileDto: CreateFileDto;
     userId: User['id'];
   }) {
-    if (fileDto.type === FILE_TYPES.FILE) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { parent_dir_id: _, ...restNewFile } = await this.createFile({
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { parent_dir_id: _, ...restNewFile } = await this.createFile({
+      file,
+      fileDto,
+      userId,
+    });
+
+    try {
+      const uploadedCloudinaryFile = await this.cloudinaryService.uploadFile(
         file,
-        fileDto,
-        userId,
-      });
+        file.originalname,
+        restNewFile.path.split(path.sep).join('/'),
+      );
 
-      try {
-        const uploadedCloudinaryFile = await this.cloudinaryService.uploadFile(
-          file,
-          file.originalname,
-          restNewFile.path.split(path.sep).join('/'),
-        );
+      restNewFile.preview_url = uploadedCloudinaryFile.url;
 
-        restNewFile.preview_url = uploadedCloudinaryFile.url;
+      await this.updateFileById(restNewFile.id, restNewFile);
+    } catch (error) {
+      console.log('ERROR CLOUDINARY', error);
+      throw new BadRequestException('Invalid file type.');
+    }
 
-        await this.updateFileById(restNewFile.id, restNewFile);
-      } catch (error) {
-        console.log('ERROR CLOUDINARY', error);
-        throw new BadRequestException('Invalid file type.');
-      }
+    return await this.fileRepository.findOne({
+      where: {
+        id: restNewFile.id,
+      },
+    });
+  }
 
-      return await this.fileRepository.findOne({
+  async createDir({
+    dirDto,
+    userId,
+  }: {
+    dirDto: CreateDirDto;
+    userId: User['id'];
+  }) {
+    if (!dirDto?.name) throw new BadRequestException('Invalid folder name');
+
+    const candidateDir = await this.fileRepository.findOne({
+      where: {
+        name: dirDto.name,
+      },
+    });
+
+    if (!!candidateDir) {
+      throw new BadRequestException('This folder is already exist');
+    }
+
+    const Owner = await this.userService.findOneById(userId);
+
+    const newFolder = this.fileRepository.create({
+      name: dirDto.name,
+      type: FILE_TYPES.DIR,
+      parent_dir_id: null,
+      user: Owner,
+    });
+
+    let parentDir: Nullable<File> = null;
+
+    if (dirDto.parent_dir_id) {
+      parentDir = await this.fileRepository.findOne({
         where: {
-          id: restNewFile.id,
+          parent_dir_id: dirDto.parent_dir_id,
         },
       });
     }
 
-    if (fileDto.type === FILE_TYPES.DIR) {
-      return this.createDir({ fileDto, userId });
+    let pathDir = '';
+
+    if (!!parentDir) {
+      pathDir = parentDir.path + path.sep + newFolder.name;
+      newFolder.parent_dir_id = parentDir.id;
+      newFolder.path = pathDir;
     }
 
-    throw new NotAcceptableException('Something went wrong');
+    newFolder.path =
+      this.getDefaultFilePath(userId) + path.sep + newFolder.name;
+
+    await this.fileRepository.save(newFolder);
+
+    try {
+      await this.cloudinaryService.createDir(
+        newFolder.path.replace(/\\/g, '/'),
+      );
+    } catch (error) {
+      console.log('CLOUDINARY CREATION DIR', error);
+    }
+
+    return await this.fileRepository.findOne({
+      where: {
+        id: newFolder.id,
+      },
+      select: {
+        name: true,
+        id: true,
+        path: true,
+        parent_dir_id: true,
+        type: true,
+        size: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
   }
 
-  async createDir({
-    fileDto,
-    userId,
-  }: {
-    fileDto: CreateFileDto;
-    userId: User['id'];
-  }) {}
+  async deleteDir({ folderId }: { folderId: File['id'] }) {
+    const candidate = await this.fileRepository.findOne({
+      where: {
+        id: folderId,
+      },
+    });
+    if (!candidate) {
+      throw new BadRequestException('This folder was not found');
+    }
+
+    const paths = candidate.path.split(path.sep);
+    const isNotEmptyFolder = paths.at(-1) !== candidate.name;
+
+    if (isNotEmptyFolder) {
+      throw new BadRequestException('This folder is not empty!');
+    }
+
+    try {
+      await this.cloudinaryService.deleteDir(
+        candidate.path.replace(/\\/g, '/'),
+      );
+    } catch (error) {
+      console.log(
+        'CLOUDINARY: SOMETHING WENT WRONG WITH DELETING FOLDER',
+        error,
+      );
+    }
+    await this.fileRepository.remove(candidate);
+
+    return;
+  }
 
   async createFile({
     file,

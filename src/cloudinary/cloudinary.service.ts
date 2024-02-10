@@ -4,6 +4,7 @@ import {
   v2 as cloudinary,
 } from 'cloudinary';
 import { Injectable } from '@nestjs/common';
+import { File } from 'src/file/entities/file.entity';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const streamifier = require('streamifier');
@@ -13,6 +14,24 @@ export type CloudinaryResponse = UploadApiResponse | UploadApiErrorResponse;
 @Injectable()
 export class CloudinaryService {
   constructor() {}
+
+  createDir(pathname: File['path']) {
+    return new Promise((res, rej) => {
+      cloudinary.api.create_folder(pathname, {}, (err, result) => {
+        if (err) rej(err);
+        res(result);
+      });
+    });
+  }
+
+  deleteDir(pathname: File['path']) {
+    return new Promise((res, rej) => {
+      cloudinary.api.delete_folder(pathname, {}, (err, result) => {
+        if (err) rej(err);
+        res(result);
+      });
+    });
+  }
 
   uploadFile(
     file: Express.Multer.File,
