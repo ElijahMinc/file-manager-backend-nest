@@ -236,6 +236,16 @@ export class FileService {
     return newFile;
   }
 
+  async findAll(userId: User['id']) {
+    return await this.fileRepository.findOne({
+      where: {
+        user: {
+          id: userId,
+        },
+      },
+    });
+  }
+
   getDefaultFilePath(userId: User['id']) {
     return this.rootFolder + path.sep + userId;
   }

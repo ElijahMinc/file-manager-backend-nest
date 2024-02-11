@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   FileTypeValidator,
+  Get,
   MaxFileSizeValidator,
   Param,
   ParseFilePipe,
@@ -27,6 +28,12 @@ import { CreateDirDto } from './dto/create-dir-dto';
 @Controller('file')
 export class FileController {
   constructor(private readonly fileService: FileService) {}
+
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  findAll(@Request() req) {
+    return this.fileService.findAll(req.user.id);
+  }
 
   @Post('upload')
   @UseGuards(JwtAuthGuard)
