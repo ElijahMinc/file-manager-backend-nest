@@ -35,9 +35,14 @@ export class File {
   @Column()
   path: string;
 
-  @OneToOne(() => File, (fileModel) => fileModel, {
-    onDelete: 'SET NULL',
+  // @OneToOne(() => File, (fileModel) => fileModel, {
+  //   onDelete: 'SET NULL',
+  //   nullable: true,
+  // })
+  @Column({
+    type: 'varchar',
     nullable: true,
+    default: null,
   })
   parent_dir_id?: Nullable<number>;
 

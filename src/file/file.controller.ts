@@ -8,6 +8,7 @@ import {
   Param,
   ParseFilePipe,
   Post,
+  Query,
   Request,
   Res,
   UploadedFile,
@@ -24,6 +25,7 @@ import {
   MAX_FILE_SIZE_VALIDATOR_CONFIG,
 } from 'src/constants';
 import { CreateDirDto } from './dto/create-dir-dto';
+import { File } from './entities/file.entity';
 
 @Controller('file')
 export class FileController {
@@ -31,8 +33,11 @@ export class FileController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  findAll(@Request() req) {
-    return this.fileService.findAll(req.user.id);
+  findAll(@Request() req, @Query('parent_dir_id') parent_dir_id?: File['id']) {
+    return this.fileService.findAll({
+      userId: req.user.id,
+      parent_dir_id,
+    });
   }
 
   @Post('upload')
@@ -58,6 +63,7 @@ export class FileController {
       userId: req.user.id,
     });
   }
+
   @Delete('dir/:id')
   @UseGuards(JwtAuthGuard)
   deleteDir(@Param('id') id: string, @Res() res) {

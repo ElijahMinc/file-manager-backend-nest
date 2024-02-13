@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FILE_TYPES, File } from './entities/file.entity';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { CreateFileDto } from './dto/create-file.dto';
 import { User } from 'src/user/entities/user.entity';
@@ -194,6 +194,7 @@ export class FileService {
     const fileIsExist = await this.fileRepository.findOne({
       where: {
         name: file.originalname,
+        parent_dir_id: !!fileDto?.parent_dir_id ? +fileDto.parent_dir_id : null,
       },
     });
 
@@ -203,10 +204,11 @@ export class FileService {
 
     let parentFile: Nullable<File> = null;
 
-    if (!!fileDto.parent_dir_id) {
+    if (!!fileDto?.parent_dir_id) {
       parentFile = await this.fileRepository.findOne({
         where: {
-          parent_dir_id: fileDto.parent_dir_id,
+          type: FILE_TYPES.DIR,
+          id: +fileDto.parent_dir_id,
         },
       });
     }
@@ -217,16 +219,16 @@ export class FileService {
       name: file.originalname,
       size: file.size,
       type: FILE_TYPES.FILE,
-      parent_dir_id: fileDto.parent_dir_id || null,
+      parent_dir_id: !!fileDto?.parent_dir_id ? +fileDto?.parent_dir_id : null,
       path: '',
       user,
     });
 
-    let pathnameFile = this.getDefaultFilePath(userId);
+    let pathnameFile: File['path'] = '';
 
     if (!!parentFile) {
-      const pathParentFile = path.sep + parentFile.path;
-      pathnameFile += pathParentFile;
+      // const pathParentFile = path.sep + parentFile.path;
+      pathnameFile += parentFile.path;
     }
 
     newFile.path = pathnameFile;
@@ -236,12 +238,19 @@ export class FileService {
     return newFile;
   }
 
-  async findAll(userId: User['id']) {
-    return await this.fileRepository.findOne({
+  async findAll({
+    userId,
+    parent_dir_id,
+  }: {
+    userId: User['id'];
+    parent_dir_id?: File['id'];
+  }) {
+    return await this.fileRepository.find({
       where: {
         user: {
           id: userId,
         },
+        parent_dir_id: !!parent_dir_id ? +parent_dir_id : IsNull(),
       },
     });
   }
