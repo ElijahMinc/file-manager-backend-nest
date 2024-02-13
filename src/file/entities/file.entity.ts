@@ -27,15 +27,22 @@ export class File {
   @Column()
   type: FILE_TYPES;
 
-  @Column()
+  @Column({
+    default: 0,
+  })
   size: number;
 
   @Column()
   path: string;
 
-  @OneToOne(() => File, (fileModel) => fileModel, {
-    onDelete: 'SET NULL',
+  // @OneToOne(() => File, (fileModel) => fileModel, {
+  //   onDelete: 'SET NULL',
+  //   nullable: true,
+  // })
+  @Column({
+    type: 'varchar',
     nullable: true,
+    default: null,
   })
   parent_dir_id?: Nullable<number>;
 
