@@ -76,6 +76,18 @@ export class FileController {
     });
   }
 
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  async deleteFile(@Param('id') id: string, @Res() res) {
+    await this.fileService.deleteFile({
+      fileId: +id,
+    });
+
+    return res.status(200).json({
+      message: 'Success',
+    });
+  }
+
   @Post('dir')
   @UseGuards(JwtAuthGuard)
   createDir(

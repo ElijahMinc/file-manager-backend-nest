@@ -182,6 +182,36 @@ export class FileService {
     return;
   }
 
+  async deleteFile({ fileId }: { fileId: File['id'] }) {
+    const candidate = await this.fileRepository.findOne({
+      where: {
+        id: fileId,
+      },
+    });
+
+    if (!candidate) {
+      throw new BadRequestException('This file was not found');
+    }
+
+    try {
+      console.log(
+        'file delete',
+        (candidate.path + path.sep + candidate.name).replace(/\\/g, '/'),
+      );
+      await this.cloudinaryService.deleteFile(
+        (candidate.path + path.sep + candidate.name).replace(/\\/g, '/'),
+      );
+    } catch (error) {
+      console.log(
+        'CLOUDINARY: SOMETHING WENT WRONG WITH DELETING FOLDER',
+        error,
+      );
+    }
+    await this.fileRepository.remove(candidate);
+
+    return;
+  }
+
   async createFile({
     file,
     fileDto,
@@ -194,7 +224,9 @@ export class FileService {
     const fileIsExist = await this.fileRepository.findOne({
       where: {
         name: file.originalname,
-        parent_dir_id: !!fileDto?.parent_dir_id ? +fileDto.parent_dir_id : null,
+        parent_dir_id: !!fileDto?.parent_dir_id
+          ? +fileDto.parent_dir_id
+          : IsNull(),
       },
     });
 
@@ -227,8 +259,9 @@ export class FileService {
     let pathnameFile: File['path'] = '';
 
     if (!!parentFile) {
-      // const pathParentFile = path.sep + parentFile.path;
       pathnameFile += parentFile.path;
+    } else {
+      pathnameFile += this.getDefaultFilePath(userId);
     }
 
     newFile.path = pathnameFile;

@@ -33,6 +33,15 @@ export class CloudinaryService {
     });
   }
 
+  deleteFile(pathname: File['path']) {
+    return new Promise((res, rej) => {
+      cloudinary.uploader.destroy(pathname, {}, (err, result) => {
+        if (err) rej(err);
+        res(result);
+      });
+    });
+  }
+
   uploadFile(
     file: Express.Multer.File,
     public_id: string,
