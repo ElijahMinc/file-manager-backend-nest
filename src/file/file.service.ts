@@ -194,10 +194,6 @@ export class FileService {
     }
 
     try {
-      console.log(
-        'file delete',
-        (candidate.path + path.sep + candidate.name).replace(/\\/g, '/'),
-      );
       await this.cloudinaryService.deleteFile(
         (candidate.path + path.sep + candidate.name).replace(/\\/g, '/'),
       );
