@@ -32,6 +32,10 @@ export class TokenService {
   }
 
   async refreshTokens(refreshToken: string) {
+    if (!refreshToken) {
+      throw new UnauthorizedException('No refresh token');
+    }
+
     const token = await this.tokenRepository.findOne({
       where: {
         refreshToken,
