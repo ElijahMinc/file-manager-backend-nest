@@ -33,7 +33,7 @@ export class TokenService {
 
   async refreshTokens(refreshToken: string) {
     if (!refreshToken) {
-      throw new UnauthorizedException('No refresh token');
+      throw new UnauthorizedException('Not found refresh token');
     }
 
     const token = await this.tokenRepository.findOne({
@@ -44,8 +44,6 @@ export class TokenService {
         user: true,
       },
     });
-
-    console.log('token', token);
 
     if (!token) {
       throw new UnauthorizedException('No refresh token');
@@ -68,7 +66,11 @@ export class TokenService {
   }
 
   verifyRefreshToken(refreshToken: string) {
-    return this.jwtService.verify(refreshToken);
+    try {
+      return this.jwtService.verify(refreshToken);
+    } catch (error) {
+      return false;
+    }
   }
 
   async updateRefreshToken(user: User) {
