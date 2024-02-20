@@ -76,6 +76,11 @@ export class TokenService {
         user: true,
       },
     });
+
+    if (!refreshToken) {
+      throw new UnauthorizedException();
+    }
+
     console.log('refreshToken', refreshToken);
     const newRefreshToken = this.createRefreshToken(user.id);
 
