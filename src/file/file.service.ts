@@ -89,10 +89,6 @@ export class FileService {
       },
     });
 
-    if (!!candidateDir) {
-      throw new BadRequestException('This folder is already exist');
-    }
-
     const Owner = await this.userService.findOneById(userId);
 
     const newFolder = this.fileRepository.create({
@@ -107,12 +103,15 @@ export class FileService {
     if (dirDto.parent_dir_id) {
       parentDir = await this.fileRepository.findOne({
         where: {
-          parent_dir_id: dirDto.parent_dir_id,
+          id: dirDto.parent_dir_id,
         },
       });
     }
 
     let pathDir = '';
+
+    newFolder.path =
+      this.getDefaultFilePath(userId) + path.sep + newFolder.name;
 
     if (!!parentDir) {
       pathDir = parentDir.path + path.sep + newFolder.name;
@@ -120,8 +119,9 @@ export class FileService {
       newFolder.path = pathDir;
     }
 
-    newFolder.path =
-      this.getDefaultFilePath(userId) + path.sep + newFolder.name;
+    if (!!candidateDir && newFolder.path === candidateDir.path) {
+      throw new BadRequestException('This folder is already exist');
+    }
 
     await this.fileRepository.save(newFolder);
 
