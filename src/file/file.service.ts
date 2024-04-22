@@ -270,9 +270,16 @@ export class FileService {
   async findAll({
     userId,
     parent_dir_id,
+    type,
+    sort,
   }: {
     userId: User['id'];
     parent_dir_id?: File['id'];
+    type?: File['type'];
+    sort?: Pick<
+      { [key in keyof File]: 'ASC' | 'DESC' },
+      'name' | 'size' | 'createdAt'
+    >;
   }) {
     return await this.fileRepository.find({
       where: {
@@ -280,7 +287,9 @@ export class FileService {
           id: userId,
         },
         parent_dir_id: !!parent_dir_id ? +parent_dir_id : IsNull(),
+        type,
       },
+      order: sort,
     });
   }
 

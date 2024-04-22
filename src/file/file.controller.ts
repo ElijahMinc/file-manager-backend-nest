@@ -33,10 +33,25 @@ export class FileController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  findAll(@Request() req, @Query('parent_dir_id') parent_dir_id?: File['id']) {
+  findAll(
+    @Request() req,
+    @Query('parent_dir_id') parent_dir_id?: File['id'],
+    @Query('type') type?: File['type'],
+    @Query('name') name?: 'ASC' | 'DESC',
+    @Query('size') size?: 'ASC' | 'DESC',
+    @Query('name') createdAt?: 'ASC' | 'DESC',
+  ) {
+    const sort = {
+      name,
+      size,
+      createdAt,
+    };
+
     return this.fileService.findAll({
       userId: req.user.id,
       parent_dir_id,
+      type,
+      sort,
     });
   }
 
